@@ -1,0 +1,35 @@
+import("//build/ohos.gni")
+
+config("ipc_config") {
+  include_dirs = [
+    "include", 
+    "//utils/native/base/include",
+  ]
+}
+
+ohos_shared_library("ipc_core") {
+  include_dirs = [
+    "include",
+  ]
+
+  sources = [
+    "ipc_center.cpp",
+    "ipc_object_stub.cpp",
+    "ipc_skeleton.cpp",
+    "iremote_object.cpp",
+    "message_parcel.cpp",
+  ]
+
+  deps = [
+    "//utils/native/base:utils",
+  ]
+
+  public_configs = [ ":ipc_config" ]
+
+}
+
+group("ipc_single") {
+  deps = [ ":ipc_core" ]
+  public_configs = [ ":ipc_config" ]
+}
+
