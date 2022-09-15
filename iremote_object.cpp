@@ -100,7 +100,7 @@ unsigned long long IRemoteObject::GetHandle()
 	return handle_;
 }
 
-sptr< IRemoteBroker > IRemoteObject::Asnterface()
+sptr< IRemoteBroker > IRemoteObject::AsInterface()
 {
 	return nullptr;
 }
