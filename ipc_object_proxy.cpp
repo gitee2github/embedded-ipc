@@ -28,15 +28,16 @@ int IPCObjectProxy::SendRequest(uint32_t code, MessageParcel &data, MessageParce
 
 	shmPtr = OpenShm(sendShmKey_);
 	if (shmPtr == nullptr) {
+		IPC_LOG("Open Stub shm failed\n");
 		return -1;
 	}
 
-	IPC_LOG("WAITING FOR PREVIOUS IPC\n");
+	IPC_DEBUG("WAITING FOR PREVIOUS IPC\n");
 
 	// waiting previous ipc
 	while (shmPtr->needReply);
 
-	IPC_LOG("SENDING REQUEST with code=%u\n", code);
+	IPC_DEBUG("SENDING REQUEST with code=%u\n", code);
 
 	shmPtr->requestCode = code;
 	shmPtr->inputSz = data.GetDataSize();
@@ -45,7 +46,7 @@ int IPCObjectProxy::SendRequest(uint32_t code, MessageParcel &data, MessageParce
 	}
 	memcpy(shmPtr->inputData, (void *)data.GetData(), shmPtr->inputSz);
 	if (data.ContainFileDescriptors()) {
-		IPC_LOG("SENDING FD\n");
+		IPC_DEBUG("SENDING FD\n");
 		shmPtr->containFd = true;
 		if (!IPCSkeleton::SocketWriteFd(socketAddr_, data.ReadFileDescriptor())) {
 			IPC_LOG("Send File Descriptor failed\n");
@@ -59,11 +60,11 @@ int IPCObjectProxy::SendRequest(uint32_t code, MessageParcel &data, MessageParce
 	}
 	shmPtr->needReply = true;
 
-	IPC_LOG("WAITING STUB REPLY with handle=%llx\n", handle_);
+	IPC_DEBUG("WAITING STUB REPLY with handle=%llx\n", handle_);
 
 	// waiting receiver reply
 	while (shmPtr->needReply);
-	IPC_LOG("RECEIVED DATA FROM REMOTE with code=%u\n", code);
+	IPC_DEBUG("RECEIVED DATA FROM REMOTE with code=%u\n", code);
 
 	reply.WriteUnpadBuffer(shmPtr->outputData, shmPtr->outputSz);
 	if (shmPtr->containFd) {
@@ -97,4 +98,4 @@ void IPCObjectProxy::SendObituary()
 	}
 }
 
-}; // namespace OHOS
+} // namespace OHOS

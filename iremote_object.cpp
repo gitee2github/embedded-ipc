@@ -4,12 +4,13 @@
 #include "ipc_socket_manager.h"
 
 key_t g_client_server_shmKey = 0x544F53;
+key_t g_device_auth_shmKey = 0x52544F;
 
 namespace OHOS {
 
 static const char *IPC_SERVER_SOCKET_ADDR = "/tmp/ipc.socket.server";
 
-IRemoteObject::IRemoteObject() : handle_(0) {}
+IRemoteObject::IRemoteObject() : handle_(0), isDSoftBusObj(true) {}
 
 IRemoteObject::~IRemoteObject() {}
 
@@ -33,18 +34,18 @@ int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel
 		return 0;
 	}
 
-	shmPtr = OpenShm(g_client_server_shmKey);
+	shmPtr = OpenShm(isDSoftBusObj ? g_client_server_shmKey : g_device_auth_shmKey);
 	if (shmPtr == nullptr) {
 		IPC_LOG("Open server shm failed\n");
 		return -1;
 	}
 
-	IPC_LOG("WAITING FOR PREVIOUS IPC\n");
+	IPC_DEBUG("WAITING FOR PREVIOUS IPC\n");
 
 	// waiting previous ipc
 	while (shmPtr->needReply);
 
-	IPC_LOG("SENDING REQUEST with code=%u\n", code);
+	IPC_DEBUG("SENDING REQUEST with code=%u\n", code);
 
 	shmPtr->requestCode = code;
 	shmPtr->inputSz = data.GetDataSize();
@@ -53,7 +54,7 @@ int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel
 	}
 	memcpy(shmPtr->inputData, (void *)data.GetData(), shmPtr->inputSz);
 	if (data.ContainFileDescriptors()) {
-		IPC_LOG("SENDING FD\n");
+		IPC_DEBUG("SENDING FD\n");
 		shmPtr->containFd = true;
 		if (!IPCSkeleton::SocketWriteFd(IPC_SERVER_SOCKET_ADDR, data.ReadFileDescriptor())) {
 			IPC_LOG("Send File Descriptor failed\n");
@@ -69,7 +70,7 @@ int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel
 
 	// waiting receiver reply
 	while (shmPtr->needReply);
-	IPC_LOG("RECEIVED DATA FROM REMOTE with code=%u\n", code);
+	IPC_DEBUG("RECEIVED DATA FROM REMOTE with code=%u\n", code);
 
 	reply.WriteUnpadBuffer(shmPtr->outputData, shmPtr->outputSz);
 	if (shmPtr->containFd) {
@@ -97,6 +98,16 @@ bool IRemoteObject::Marshalling(Parcel &parcel) const
 unsigned long long IRemoteObject::GetHandle()
 {
 	return handle_;
+}
+
+sptr< IRemoteBroker > IRemoteObject::Asnterface()
+{
+	return nullptr;
+}
+
+bool IRemoteObject::IsProxyObject() const
+{
+	return true;
 }
 
 } // namespace OHOS

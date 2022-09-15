@@ -14,10 +14,6 @@ static const char *IPC_CLIENT_SOCKET_ADDR = "/tmp/ipc.socket.client";
 
 size_t IpcCenter::threadNum_ = 0;
 
-IpcCenter::IpcCenter() {}
-
-IpcCenter::~IpcCenter() {}
-
 bool IpcCenter::ShmInit(key_t shmKey)
 {
 	IpcShmData *shmPtr = OpenShm(shmKey);
@@ -50,6 +46,11 @@ bool IpcCenter::Init(bool isServer, IPCObjectStub *stub)
 		return false;
 	}
 
+	if (isServer && !ShmInit(g_device_auth_shmKey)) {
+		IPC_LOG("Device auth shm init failed\n");
+		return false;
+	}
+
 	if (stub->recvFd_ >= 0) {
 		close(stub->recvFd_);
 	}
@@ -74,7 +75,7 @@ void IpcCenter::ProcessHandle(key_t shmKey, IPCObjectStub *ipcStub)
 		IPC_LOG("Open shm failed");
 		return;
 	}
-	IPC_LOG("STUB LISTENING with handle=%llx\n", ipcStub->handle_);
+	IPC_DEBUG("STUB LISTENING with handle=%llx\n", ipcStub->handle_);
 	do {
 		while (!shmPtr->needReply) {
 			usleep(10);
@@ -97,7 +98,7 @@ void IpcCenter::ProcessHandle(key_t shmKey, IPCObjectStub *ipcStub)
 			continue;
 		}
 
-		IPC_LOG("PROCESSING REMOTE REQUEST with handle=%llx\n", ipcStub->handle_);
+		IPC_DEBUG("PROCESSING REMOTE REQUEST with handle=%llx\n", ipcStub->handle_);
 		MessageParcel data, reply;
 		MessageOption option;
 		data.WriteUnpadBuffer(shmPtr->inputData, shmPtr->inputSz);
@@ -133,16 +134,17 @@ void IpcCenter::ProcessHandle(key_t shmKey, IPCObjectStub *ipcStub)
 			shmPtr->containHandle = true;
 		}
 		shmPtr->needReply = false;
-		IPC_LOG("IPC STUB PROCESS END with handle=%llx\n", ipcStub->handle_);
+		IPC_DEBUG("IPC STUB PROCESS END with handle=%llx\n", ipcStub->handle_);
 	} while (!ipcStub->needStop_);
-	IPC_LOG("STUB LISTENING END with handle=%llx\n", ipcStub->handle_);
+	IPC_DEBUG("STUB LISTENING END with handle=%llx\n", ipcStub->handle_);
 	shmdt((void*)shmPtr);
 }
 
 bool IpcCenter::ThreadCreate(IPCObjectStub *stub)
 {
 	++threadNum_;
-	std::thread new_thread(std::bind(&IpcCenter::ProcessHandle, g_client_server_shmKey, stub));
+	std::thread new_thread(std::bind(&IpcCenter::ProcessHandle,
+		stub->isDSoftBusObj ? g_client_server_shmKey : g_device_auth_shmKey, stub));
 	new_thread.detach();
 	return true;
 }

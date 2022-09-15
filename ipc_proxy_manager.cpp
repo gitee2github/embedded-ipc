@@ -28,4 +28,4 @@ void IPCProxyManager::CleanProxy(unsigned long long handle)
 	}
 }
 
-}; // namespace OHOS
+} // namespace OHOS

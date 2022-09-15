@@ -9,9 +9,12 @@
 #include <cerrno>
 
 #define IPC_LOG(fmt, args...) \
-	printf("[IPC LOG %s:%u]" fmt, __FILE__, __LINE__, ##args);
+	printf("[IPC LOG %s:%u]" fmt, __FILE__, __LINE__, ##args)
+#define IPC_DEBUG(fmt, args...) \
+//	printf("[IPC DEBUG %s:%u]" rmt, __FILE__, __LINE__, ##args)
 
 extern key_t g_client_server_shmKey;
+extern key_t g_device_auth_shmKey;
 
 const int IPC_SHM_FLAG = IPC_CREAT | 0666;
 

@@ -3,26 +3,14 @@
 
 #include "message_parcel.h"
 #include "message_option.h"
+#include "iremote_broker.h"
+
+#define ERR_NONE 0
+#define NO_ERROR 0
 
 namespace OHOS {
 
-class IRemoteBroker : public virtual RefBase {
-public:
-	IRemoteBroker() = default;
-	virtual ~IRemoteBroker() override = default;
-	virtual sptr< IRemoteObject > AsObject() = 0;
-	static inline sptr< IRemoteBroker > AsImplement(const sptr< IRemoteObject > &object)
-	{
-		return nullptr;
-	}
-};
-
-#define DECLARE_INTERFACE_DESCRIPTOR(DESCRIPTOR)				\
-	static inline const std::u16string metaDescriptor_ = {DESCRIPTOR} ;	\
-	static inline const std::u16string &GetDescriptor()			\
-	{									\
-		return metaDescriptor_;						\
-	}
+class IRemoteBroker;
 
 class IRemoteObject : public virtual Parcelable {
 public:
@@ -37,8 +25,11 @@ public:
 	virtual bool AddDeathRecipient(const sptr< DeathRecipient > &recipient);
 	virtual bool RemoveDeathRecipient(const sptr< DeathRecipient > &recipient);
 	virtual bool Marshalling(Parcel &parcel) const override;
+	virtual bool IsProxyObject() const;
+	virtual sptr< IRemoteBroker > AsInterface();
 	unsigned long long GetHandle();
 	unsigned long long handle_;
+	bool isDSoftBusObj;
 };
 
 } // namespace OHOS

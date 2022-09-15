@@ -9,6 +9,7 @@
 namespace OHOS {
 
 sptr< IRemoteObject > IPCSkeleton::obj_ = nullptr;
+sptr< IRemoteObject > IPCSkeleton::deviceAuthObj_ = nullptr;
 
 pid_t IPCSkeleton::GetCallingPid()
 {
@@ -32,6 +33,22 @@ sptr< IRemoteObject > IPCSkeleton::GetContextObject()
 		obj_ = new IRemoteObject();
 	}
 	return obj_;
+}
+
+bool IPCSkeleton::SetDeviceAuthObj(sptr< IRemoteObject > obj)
+{
+	deviceAuthObj_ = obj;
+	deviceAuthObj_->isDSoftBusObj = false;
+	return true;
+}
+
+sptr< IRemoteObject > IPCSkeleton::GetDeviceAuthObj()
+{
+	if (deviceAuthObj_ == nullptr) {
+		deviceAuthObj_ = new IRemoteObject();
+		deviceAuthObj_->isDSoftBusObj = false;
+	}
+	return deviceAuthObj_;
 }
 
 int IPCSkeleton::SocketListening(const char *addr)

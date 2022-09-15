@@ -22,9 +22,12 @@ public:
 	static int SocketListening(const char *addr);
 	static int SocketReadFd(int socketFd);
 	static bool SocketWriteFd(const char *addr, int fd);
+	static bool SetDeviceAuthObj(sptr< IRemoteObject > obj);
+	static sptr< IRemoteObject > GetDeviceAuthObj();
 
 private:
 	static sptr< IRemoteObject > obj_;
+	static sptr< IRemoteObject > deviceAuthObj_;
 };
 
 } // namespace OHOS

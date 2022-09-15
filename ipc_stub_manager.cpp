@@ -17,4 +17,4 @@ void IPCStubManager::InsertStub(unsigned long long handle, sptr< IPCObjectStub >
 	stubMap_.emplace(handle, stub);
 }
 
-}; // namespace OHOS
+} // namespace OHOS
