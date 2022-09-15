@@ -8,15 +8,11 @@ namespace OHOS {
 
 class IpcCenter {
 public:
-	IpcCenter();
-	bool Init(bool isServer, IPCObjectStub *stub);
-	bool ThreadCreate();
-	void ProcessHandle();
-private:
-	bool ShmInit(key_t ShmKey);
-	size_t threadNum_;
-	IPCObjectStub *ipcStub_;
-	bool needStop_;
+	static bool ShmInit(key_t ShmKey);
+	static bool Init(bool isServer, IPCObjectStub *stub);
+	static bool ThreadCreate(IPCObjectStub *stub);
+	static void ProcessHandle(key_t ShmKey, IPCObjectStub *ipcStub);
+	static size_t threadNum_;
 };
 
 } // namespace OHOS

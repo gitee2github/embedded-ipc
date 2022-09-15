@@ -22,6 +22,9 @@ public:
 	bool WriteInterfaceToken(std::u16string name);
 	std::u16string ReadInterfaceToken();
 	size_t GetRawDataSize() const;
+	bool ContainRemoteObject();
+	unsigned long long RemoteObjectHandle_;
+	bool isContainHandle_;
 private:
 	static constexpr size_t MAX_RAWDATA_SIZE = 128 * 1024 * 1024; // 128M
 	int fd_;
