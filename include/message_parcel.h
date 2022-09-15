@@ -18,6 +18,9 @@ public:
 	bool ContainFileDescriptors() const;
 	sptr< IRemoteObject > ReadRemoteObject();
 	bool WriteRemoteObject(const sptr< IRemoteObject > &object);
+	bool ContainRemoteObject();
+	unsigned long long RemoteObjectHandle_;
+	bool isContainHandle_;
 private:
 	static constexpr size_t MAX_RAWDATA_SIZE = 128 * 1024 * 1024; // 128M
 	int fd_;

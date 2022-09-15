@@ -26,6 +26,8 @@ public:
 
 class IRemoteObject : public virtual Parcelable {
 public:
+	IRemoteObject();
+	~IRemoteObject();
 	class DeathRecipient : public RefBase {
 	public:
 		virtual void OnRemoteDied(const wptr< IRemoteObject > &object) {}
@@ -35,6 +37,8 @@ public:
 	virtual bool AddDeathRecipient(const sptr< DeathRecipient > &recipient);
 	virtual bool RemoveDeathRecipient(const sptr< DeathRecipient > &recipient);
 	virtual bool Marshalling(Parcel &parcel) const override;
+	unsigned long long GetHandle();
+	unsigned long long handle_;
 };
 
 } // namespace OHOS

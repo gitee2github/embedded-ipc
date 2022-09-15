@@ -8,12 +8,7 @@
 
 namespace OHOS {
 
-const char *IPC_SERVER_SOCKET_ADDR = "/tmp/ipc.socket.server";
-const char *IPC_CLIENT_SOCKET_ADDR = "/tmp/ipc.socket.client";
-
 sptr< IRemoteObject > IPCSkeleton::obj_ = nullptr;
-int IPCSkeleton::socketFd_ = -1;
-bool IPCSkeleton::isServer_ = true;
 
 pid_t IPCSkeleton::GetCallingPid()
 {
@@ -39,20 +34,12 @@ sptr< IRemoteObject > IPCSkeleton::GetContextObject()
 	return obj_;
 }
 
-bool IPCSkeleton::SocketListening(bool isServer)
+int IPCSkeleton::SocketListening(const char *addr)
 {
-	if (socketFd_ >= 0) {
-		IPC_LOG("Socket is opened\n");
-		return false;
-	}
+	unlink(addr);
 
-	isServer_ = isServer;
-
-	const char *ipcPath = isServer ? IPC_SERVER_SOCKET_ADDR : IPC_CLIENT_SOCKET_ADDR;
-	unlink(ipcPath);
-
-	socketFd_ = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
-	if (socketFd_ < 0) {
+	int socketFd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	if (socketFd < 0) {
 		IPC_LOG("Socket failed errno=%d\n", errno);
 		return false;
 	}
@@ -60,35 +47,35 @@ bool IPCSkeleton::SocketListening(bool isServer)
 	struct sockaddr_un socketAddr;
 	memset(&socketAddr, 0, sizeof(socketAddr));
 	socketAddr.sun_family = AF_UNIX;
-	strcpy(socketAddr.sun_path, ipcPath);
-	int ret = bind(socketFd_, (struct sockaddr *)&socketAddr, sizeof(socketAddr));
+	strcpy(socketAddr.sun_path, addr);
+	int ret = bind(socketFd, (struct sockaddr *)&socketAddr, sizeof(socketAddr));
 	if (ret < 0) {
 		IPC_LOG("Bind socket failed errno=%d\n", errno);
-		close(socketFd_);
-		socketFd_ = -1;
+		close(socketFd);
+		socketFd = -1;
 		return false;
 	}
 
-	ret = listen(socketFd_, 3);
+	ret = listen(socketFd, 3);
 	if (ret < 0) {
 		IPC_LOG("listen socket failed errno=%d\n", errno);
-		close(socketFd_);
-		socketFd_ = -1;
+		close(socketFd);
+		socketFd = -1;
 		return false;
 	}
-	return true;
+	return socketFd;
 }
 
-int IPCSkeleton::SocketReadFd()
+int IPCSkeleton::SocketReadFd(int socketFd)
 {
-	if (socketFd_ < 0) {
+	if (socketFd < 0) {
 		IPC_LOG("Read fd from an uninitialized socket\n");
 		return -1;
 	}
 
 	struct sockaddr_un acceptAddr;
 	socklen_t sockLen = sizeof(acceptAddr);
-	int recvFd = accept(socketFd_, (struct sockaddr *)&acceptAddr, &sockLen);
+	int recvFd = accept(socketFd, (struct sockaddr *)&acceptAddr, &sockLen);
 	if (recvFd < 0) {
 		IPC_LOG("Accept failed errno=%d\n", errno);
 		return -1;
@@ -126,7 +113,7 @@ int IPCSkeleton::SocketReadFd()
 	return *((int *)CMSG_DATA(cmsgPtr));
 }
 
-bool IPCSkeleton::SocketWriteFd(int fd)
+bool IPCSkeleton::SocketWriteFd(const char *addr, int fd)
 {
 	int socketFd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (socketFd < 0) {
@@ -137,7 +124,7 @@ bool IPCSkeleton::SocketWriteFd(int fd)
 	struct sockaddr_un socketAddr;
 	memset(&socketAddr, 0, sizeof(socketAddr));
 	socketAddr.sun_family = AF_UNIX;
-	strcpy(socketAddr.sun_path, isServer_ ? IPC_CLIENT_SOCKET_ADDR : IPC_SERVER_SOCKET_ADDR);
+	strcpy(socketAddr.sun_path, addr);
 	int ret = connect(socketFd, (struct sockaddr *)&socketAddr, sizeof(socketAddr));
 	if (ret < 0) {
 		IPC_LOG("Connect failed errno=%d\n", errno);

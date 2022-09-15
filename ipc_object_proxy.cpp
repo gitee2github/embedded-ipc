@@ -1,29 +1,22 @@
-#include "ipc_base.h"
-#include "iremote_object.h"
 #include "ipc_skeleton.h"
+#include "ipc_object_proxy.h"
 #include "ipc_socket_manager.h"
-
-key_t g_client_server_shmKey = 0x544F53;
 
 namespace OHOS {
 
-static const char *IPC_SERVER_SOCKET_ADDR = "/tmp/ipc.socket.server";
+static const char *IPC_CLIENT_SOCKET_ADDR = "/tmp/ipc.socket.client";
 
-IRemoteObject::IRemoteObject() : handle_(0) {}
-
-IRemoteObject::~IRemoteObject() {}
-
-bool IRemoteObject::AddDeathRecipient(const sptr< DeathRecipient > &recipient)
+IPCObjectProxy::IPCObjectProxy(unsigned long long handle) :
+	socketAddr_(IPC_CLIENT_SOCKET_ADDR), recvFd_(-1), deathRecipient_(nullptr)
 {
-	return true;
+	IPC_LOG("INSERT PROXY with handle=%llx\n", handle);
+	handle_ = handle;
+	sendShmKey_ = HandleToKey(handle);
 }
 
-bool IRemoteObject::RemoveDeathRecipient(const sptr< DeathRecipient > &recipient)
-{
-	return true;
-}
+IPCObjectProxy::~IPCObjectProxy() {}
 
-int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
+int IPCObjectProxy::SendRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
 	IpcShmData *shmPtr = NULL;
 
@@ -33,9 +26,8 @@ int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel
 		return 0;
 	}
 
-	shmPtr = OpenShm(g_client_server_shmKey);
+	shmPtr = OpenShm(sendShmKey_);
 	if (shmPtr == nullptr) {
-		IPC_LOG("Open server shm failed\n");
 		return -1;
 	}
 
@@ -55,17 +47,19 @@ int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel
 	if (data.ContainFileDescriptors()) {
 		IPC_LOG("SENDING FD\n");
 		shmPtr->containFd = true;
-		if (!IPCSkeleton::SocketWriteFd(IPC_SERVER_SOCKET_ADDR, data.ReadFileDescriptor())) {
+		if (!IPCSkeleton::SocketWriteFd(socketAddr_, data.ReadFileDescriptor())) {
 			IPC_LOG("Send File Descriptor failed\n");
 			shmdt((void*)shmPtr);
 			return -1;
 		}
 	}
-	if (data.isContainHandle_) {
+	if (data.ContainRemoteObject()) {
 		shmPtr->containHandle = true;
 		shmPtr->handle = data.RemoteObjectHandle_;
 	}
 	shmPtr->needReply = true;
+
+	IPC_LOG("WAITING STUB REPLY with handle=%llx\n", handle_);
 
 	// waiting receiver reply
 	while (shmPtr->needReply);
@@ -73,7 +67,7 @@ int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel
 
 	reply.WriteUnpadBuffer(shmPtr->outputData, shmPtr->outputSz);
 	if (shmPtr->containFd) {
-		if (!reply.WriteFileDescriptor(IPCSkeleton::SocketReadFd(IPCSocketManager::FindSocketFd(0)))) {
+		if (!reply.WriteFileDescriptor(IPCSkeleton::SocketReadFd(IPCSocketManager::FindSocketFd(1)))) {
 			IPC_LOG("Receive reply fd failed");
 			shmdt((void *)shmPtr);
 			return -1;
@@ -89,14 +83,18 @@ int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel
 	return 0;
 }
 
-bool IRemoteObject::Marshalling(Parcel &parcel) const
+bool IPCObjectProxy::AddDeathRecipient(const sptr< DeathRecipient > &recipient)
 {
+	deathRecipient_ = recipient;
 	return true;
 }
 
-unsigned long long IRemoteObject::GetHandle()
+void IPCObjectProxy::SendObituary()
 {
-	return handle_;
+	if (deathRecipient_ != nullptr) {
+		deathRecipient_->OnRemoteDied(this);
+		deathRecipient_ = nullptr;
+	}
 }
 
-} // namespace OHOS
+}; // namespace OHOS

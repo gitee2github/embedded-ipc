@@ -19,14 +19,12 @@ public:
 	static uid_t GetCallingUid();
 	static sptr< IRemoteObject > GetContextObject();
 	static bool SetContextObject(sptr< IRemoteObject > &object);
-	static bool SocketListening(bool isServer);
-	static int SocketReadFd();
-	static bool SocketWriteFd(int fd);
+	static int SocketListening(const char *addr);
+	static int SocketReadFd(int socketFd);
+	static bool SocketWriteFd(const char *addr, int fd);
 
 private:
 	static sptr< IRemoteObject > obj_;
-	static int socketFd_;
-	static bool isServer_;
 };
 
 } // namespace OHOS
