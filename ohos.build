@@ -1,0 +1,24 @@
+{
+  "subsystem": "depend",
+  "parts": {
+    "ipc": {
+      "module_list": [ ],
+      "inner_kits": [
+        {
+          "name": "//depend/ipc:ipc_single",
+          "header": {
+            "header_files": [ ],
+            "header_base": "//depend"
+          }
+        },
+        {
+          "name":"//depend/ipc:ipc_core",
+          "header": {
+            "header_files": [ ],
+            "header_base": "//depend"
+          }
+        }
+      ]
+    }
+  }
+}
