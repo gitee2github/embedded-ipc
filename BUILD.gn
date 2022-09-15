@@ -18,6 +18,11 @@ ohos_shared_library("ipc_core") {
     "ipc_skeleton.cpp",
     "iremote_object.cpp",
     "message_parcel.cpp",
+    "ipc_object_proxy.cpp",
+    "ipc_proxy_manager.cpp",
+    "ipc_stub_manager.cpp",
+    "ipc_socket_manager.cpp",
+    "iremote_broker.cpp",
   ]
 
   deps = [
