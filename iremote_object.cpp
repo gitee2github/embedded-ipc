@@ -27,6 +27,7 @@ bool IRemoteObject::RemoveDeathRecipient(const sptr< DeathRecipient > &recipient
 int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option)
 {
 	IpcShmData *shmPtr = NULL;
+	bool expect;
 
 	if (code == GET_SA_REQUEST_CODE || (code >= WIFI_DEVICE_ABILITY_ID && code <= WIFI_P2P_ABILITY_ID)) {
 		reply.isContainHandle_ = true;
@@ -43,7 +44,9 @@ int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel
 	IPC_DEBUG("WAITING FOR PREVIOUS IPC\n");
 
 	// waiting previous ipc
-	while (shmPtr->needReply);
+	do {
+		expect = false;
+	} while (!shmPtr->isProcessing.compare_exchange_weak(expect, true));
 
 	IPC_DEBUG("SENDING REQUEST with code=%u\n", code);
 
@@ -86,6 +89,7 @@ int IRemoteObject::SendRequest(uint32_t code, MessageParcel &data, MessageParcel
 		reply.RemoteObjectHandle_ = shmPtr->handle;
 		shmPtr->containHandle = false;
 	}
+	shmPtr->isProcessing = false;
 	shmdt((void *)shmPtr);
 	return 0;
 }
