@@ -20,6 +20,8 @@ const int IPC_SHM_FLAG = IPC_CREAT | 0666;
 
 const size_t DATA_SIZE = 0x20000;
 
+const unsigned int MAX_SOCKET_ADDR_LEN = 128;
+
 const int32_t GET_SA_REQUEST_CODE = 2;
 const int32_t WIFI_DEVICE_ABILITY_ID = 1125;
 const int32_t WIFI_P2P_ABILITY_ID = 1128;

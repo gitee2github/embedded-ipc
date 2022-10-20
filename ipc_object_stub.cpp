@@ -39,7 +39,9 @@ void IPCObjectStub::CreateThread(key_t shmKey)
 	IpcCenter::threadNum_++;
 	std::thread new_thread(std::bind(IpcCenter::ProcessHandle, shmKey, this));
 	new_thread.detach();
-	recvFd_ = IPCSkeleton::SocketListening(IPC_CLIENT_SOCKET_ADDR);
+	char cliend_socket_addr[MAX_SOCKET_ADDR_LEN];
+	sprintf(cliend_socket_addr, "%s.%llx", IPC_CLIENT_SOCKET_ADDR, handle_);
+	recvFd_ = IPCSkeleton::SocketListening(cliend_socket_addr);
 	IPCSocketManager::InsertSocketFd(1, recvFd_);
 	if (recvFd_ < 0) {
 		IPC_LOG("Stub socket listen failed\n");

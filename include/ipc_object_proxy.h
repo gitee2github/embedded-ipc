@@ -15,7 +15,7 @@ public:
 	void SendObituary();
 private:
 	key_t sendShmKey_;
-	const char *socketAddr_;
+	char socketAddr_[MAX_SOCKET_ADDR_LEN];
 	int recvFd_;
 	sptr< DeathRecipient > deathRecipient_;
 };

@@ -7,9 +7,10 @@ namespace OHOS {
 static const char *IPC_CLIENT_SOCKET_ADDR = "/tmp/ipc.socket.client";
 
 IPCObjectProxy::IPCObjectProxy(unsigned long long handle) :
-	socketAddr_(IPC_CLIENT_SOCKET_ADDR), recvFd_(-1), deathRecipient_(nullptr)
+	recvFd_(-1), deathRecipient_(nullptr)
 {
 	IPC_LOG("INSERT PROXY with handle=%llx\n", handle);
+	sprintf(socketAddr_, "%s.%llx", IPC_CLIENT_SOCKET_ADDR, handle);
 	handle_ = handle;
 	sendShmKey_ = HandleToKey(handle);
 }

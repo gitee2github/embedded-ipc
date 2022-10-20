@@ -24,6 +24,7 @@ public:
 	static bool SocketWriteFd(const char *addr, int fd);
 	static bool SetDeviceAuthObj(sptr< IRemoteObject > obj);
 	static sptr< IRemoteObject > GetDeviceAuthObj();
+	static int HandleToPid(unsigned long long handle);
 
 private:
 	static sptr< IRemoteObject > obj_;

@@ -175,4 +175,10 @@ bool IPCSkeleton::SocketWriteFd(const char *addr, int fd)
 	return ret >= 0;
 }
 
+int IPCSkeleton::HandleToPid(unsigned long long handle)
+{
+	handle >>= 32;
+	return (int)handle;
+}
+
 } //namespace OHOS
